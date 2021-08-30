@@ -1,0 +1,78 @@
+---
+title: "practice"
+author: "Justin Markey"
+date: "8/26/2021"
+---
+```{r}
+data1 = read.csv("Professor.csv")
+
+x = (data1$Exper)
+hist(x)
+```
+
+scatterplot
+```{r}
+
+scatterplot(data=data1,
+            x=Exper,
+            y=Salary)
+
+```
+
+Show box plot
+```{r}
+with(data1,
+     plot(x=Salary, y=Gender))
+```
+
+conditional ##scatterplot, use car package
+
+```{r}
+library(car)
+
+```
+
+
+rank the data and make a boxplot
+```{r}
+library(dplyr)
+
+data1$Exper_Rank = with(data1, ntile(Exper,4))
+
+##plot it
+
+with(data1,
+     plot(Salary~Exper_Rank))
+
+```
+
+find target variable to be categorical
+mosiacplot
+make a new cateogorical var called High_Salary if salary is greater than 90 otherwise it is 0
+```{r}
+data1$High_Salary = with(data1,
+                         ifelse(Salary>90,1,0))
+```
+
+Produce contingency table and store it as a var
+```{r}
+
+contingency = with(data1, table(Gender, High_Salary))
+```
+
+Graph mosaic
+```{r}
+mosaicplot(contingency)
+```
+
+
+Y: categorical, x: numeric
+
+change x into categorical data{ranks}, so that its categorical vs categorical
+produce table to make a mosiacplot
+
+```{r}
+contingency2 =with(data1,table(Exper_Rank , High_Salary))
+mosaicplot(contingency2)
+```
+
