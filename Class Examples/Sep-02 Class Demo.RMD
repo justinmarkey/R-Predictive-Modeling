@@ -1,0 +1,107 @@
+---
+title: "Winsorization"
+output: word_document
+---
+
+1) Import the demonstration data "IPO.csv".
+```{r}
+ipo.data<-read.csv("ipo.csv")
+```
+
+2) A quick summary of the data
+```{r}
+summary(ipo.data)
+```
+
+Now let's address the issue of outlier
+# 1) Check the existense of the outliers
+```{r}
+with(ipo.data,
+     boxplot(Initial.Return))
+```
+# 2) locate outliers
+First, define normal range
+```{r}
+q1<-with(ipo.data,quantile(Initial.Return,0.25,na.rm=TRUE))
+q3<-with(ipo.data,quantile(Initial.Return,0.75,na.rm=TRUE))
+range.low<-q1-1.5*(q3-q1)
+range.high<-q3+1.5*(q3-q1)
+```
+
+Second, identify outliers based on the normal range
+Approach 1:
+```{r}
+ipo.data$outlier.label<-with(ipo.data,
+                          ifelse(Initial.Return>range.high,"Outlier",
+                           ifelse(Initial.Return<range.low,"Outlier","Normal Data")))
+subset(ipo.data,outlier.label=="Outlier")
+```
+
+Approach 2:
+```{r}
+ipo.data[with(ipo.data,which(Initial.Return>range.high|Initial.Return<range.low)),]
+```
+
+# 3) Treat Outliers by winsorization
+```{r}
+ipo.data$Initial.Return.Winsorized<-with(ipo.data,
+                          ifelse(Initial.Return>range.high,range.high,
+                           ifelse(Initial.Return<range.low,range.low,Initial.Return)))
+```
+
+Now check this wisorized Initial Return
+```{r}
+summary(ipo.data)
+```
+
+## Use a function to simplify the work we have done.
+```{r}
+winsorization<-function(dirty_var){
+  q1<-quantile(dirty_var,0.25,na.rm=TRUE)
+  q3<-quantile(dirty_var,0.75,na.rm=TRUE)
+  upper<-q3+1.5*(q3-q1)
+  lower<-q1-1.5*(q3-q1)
+  
+  cleaned_var<-ifelse(
+    dirty_var>upper,upper,
+    ifelse(dirty_var<lower, lower,
+          dirty_var))
+  
+  return(cleaned_var)
+}
+```
+
+We can test this function
+```{r}
+ipo.data$Price.Revision.Winsorized<-winsorization(ipo.data$Price.Revision)
+```
+
+Now check this cleaned data
+```{r}
+summary(ipo.data)
+```
+
+# Some extension:
+In the previous demonstration, we define outliers based on the boxplot output. Now consider defining outliers as the mean+/- 3 standard deviaion.
+
+We create a different function to perform the winsorization for this version.
+```{r}
+winsorization.v2<-function(dirty_var){
+  
+  upper<-mean(dirty_var,na.rm=TRUE)+3*sd(dirty_var,na.rm=TRUE)
+  lower<-mean(dirty_var,na.rm=TRUE)-3*sd(dirty_var,na.rm=TRUE)
+  
+  cleaned_var<-ifelse(
+    dirty_var>upper,upper,
+    ifelse(dirty_var<lower, lower,
+          dirty_var))
+  
+  return(cleaned_var)
+}
+```
+
+Let's check this function
+```{r}
+ipo.data$Initial.Return.Winsorized.V2<-winsorization.v2(ipo.data$Initial.Return)
+summary(ipo.data)
+```
