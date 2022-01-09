@@ -1,0 +1,99 @@
+---
+title: "HW3 Biz Analytics"
+author: "Justin Markey"
+date: "9/27/2021"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Import the data
+```{r}
+setwd("C:/Projects/R/bizanalytics/data")
+employee.data <- read.csv("HW3 Data.csv" , stringsAsFactors = TRUE)
+```
+# Question 1
+```{r}
+model.1<-lm(data=employee.data , Errors~Yrs.Exp)
+summary(model.1)
+```
+
+```{r}
+M1.Adj.RSquared <- summary(model.1)$adj.r.squared
+M1.Rsquared <- summary(model.1)$r.squared 
+M1.RMSE <- sqrt(mean((predict(model.1)-employee.data$Errors)^2))
+
+M1.Adj.RSquared
+M1.Rsquared
+M1.RMSE
+```
+
+# Question 2
+```{r}
+model.2<-lm(data=employee.data , Errors~Yrs.Exp+Training)
+summary(model.2)
+```
+
+```{r}
+M2.Adj.RSquared <- summary(model.2)$adj.r.squared
+M2.Rsquared <- summary(model.2)$r.squared
+M2.RMSE <- sqrt(mean((predict(model.2)-employee.data$Errors)^2))
+
+M2.Adj.RSquared
+M2.Rsquared
+M2.RMSE
+```
+
+# Question 3
+
+```{r}
+model.3<-lm(data=employee.data , Errors ~ Yrs.Exp + Training + Yrs.Exp*Training)
+summary(model.3)
+```
+
+```{r}
+M3.Adj.RSquared <- summary(model.3)$adj.r.squared
+M3.Rsquared <- summary(model.3)$r.squared
+M3.RMSE <- sqrt(mean((predict(model.3)-employee.data$Errors)^2))
+
+M3.Adj.RSquared
+M3.Rsquared
+M3.RMSE
+```
+
+# Question 4
+
+```{r}
+model.4<-lm(data=employee.data , Errors ~ Yrs.Exp + Yrs.Exp*Training)
+summary(model.4)
+```
+
+
+```{r}
+M4.Adj.RSquared <- summary(model.4)$adj.r.squared
+M4.Rsquared <- summary(model.4)$r.squared
+M4.RMSE <- sqrt(mean((predict(model.4)-employee.data$Errors)^2))
+
+M4.Adj.RSquared
+M4.Rsquared
+M4.RMSE
+```
+
+
+# Question 5 
+
+Although we've never tested the model against out of sample data, The measures can help us with deciding the best structure and predictive power. The Best model structure is the one that incorporates as many predictors while also keeping Adj R Squared high. Adj R Squared has a built in cost function to the measure so that is why its important we focus on this measure for efficient model structure. Comparing all 4 models, the best for structure is model 3. Model 3 incorporates the most predictors while also having a high Adj R squared. Model 4 has the same Adj R Square but doesn't include "Training", meaning that including "Training" has some predictive power as Adj R square stays high. The best for forecasting accuracy is RMSE. Model 3 and 4 are similar, but the RMSE is the same while there is more predictive variables included in Model 3. This means that model 3 can incorporate more variables while also keeping its error down(RMSE), Therefore more rigid and accurate.
+
+# Question 6
+
+The predictions given the specified values will yield
+
+
+```{r}
+
+predict(model.3 , newdata=data.frame(Yrs.Exp=c(10,20,5,1), Training=c(1,0,1,1)))
+```
+
+

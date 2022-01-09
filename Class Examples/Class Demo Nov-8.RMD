@@ -1,0 +1,33 @@
+---
+title: "Demonstration of Decision Tree Analysis"
+output: word_document
+---
+
+#1 Import data and create model sample
+```{r}
+adult.data<-read.csv("adult.csv")
+
+set.seed(347)
+row_index<-sample(1:nrow(adult.data),18000)
+train<-adult.data[row_index,]
+valid<-adult.data[-row_index,]
+```
+
+#2 Build a decision tree on training data set.(rpart package will be used)
+```{r}
+library(rpart)
+default.tree<-rpart(data=train, ABOVE50K~., method="class")
+```
+
+Examine the tree output:
+```{r}
+summary(default.tree)
+```
+
+Plot the tree output:
+```{r}
+library(rattle)
+fancyRpartPlot(default.tree)
+```
+
+

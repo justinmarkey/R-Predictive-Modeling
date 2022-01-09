@@ -38,9 +38,9 @@ Let Y be Salary, X be gender.
 We can use the boxplot by categories to show the relationship.
 ```{r}
 with(prof.data,
-     plot(y=Salary,x=Gender))
+     plot(y=Salary,x=as.factor(Gender)))
 with(prof.data,
-     plot(Salary~Gender))
+     plot(Salary~as.factor(Gender)))
 
 ```
 

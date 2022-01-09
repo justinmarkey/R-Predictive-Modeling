@@ -1,0 +1,75 @@
+---
+title: "Performance Evaluation (Part 1)"
+output: word_document
+---
+
+```{r}
+iphone.data<-read.csv("iphone.csv")
+```
+
+# Measure 1: AIC Index
+Let's build a logistic regression with iphone data
+```{r}
+logit<-glm(Iphone~Income, data=iphone.data,
+      family=binomial)
+```
+
+We can get the AIC from the model summary
+```{r}
+summary(logit)
+```
+
+Or we can apply aic() function to obtain the AIC index
+```{r}
+AIC(logit)
+```
+Let's try build the model through a linear regression. In this type of regression, it is called linear probability model.
+```{r}
+lpm<-lm(Iphone~Income,data=iphone.data)
+summary(lpm)
+```
+
+We can get the AIC for this model by 
+```{r}
+AIC(lpm)
+```
+Therefore, logit model is better than linear probability model.
+
+# Measure 2: Pseudo R-Squared
+
+## Enfron's Pseudo R-Squared
+```{r}
+# two inputs:
+y.actual<-iphone.data$Iphone
+y.pred<-predict(logit,type="response")
+```
+
+The Pseudo R-Squared is calculated as:
+```{r}
+1-sum((y.actual-y.pred)^2)/sum((y.actual-mean(y.actual))^2)
+```
+
+## MacFadden's Pseudo R-Squared
+```{r}
+# two inputs: LL for full model, LL for null model
+LL.full<-as.numeric(logLik(logit))
+null.logit<-glm(data=iphone.data,
+                family=binomial,
+                Iphone~1)
+LL.null<-as.numeric(logLik(null.logit))
+```
+
+The Pseudo R-Squared is calculated as:
+```{r}
+1-(LL.full)/(LL.null)
+```
+
+## Cox & Snell's Pseudo R-Squared
+
+We can modify MacFadden's R-Squared to obtain the value
+```{r}
+1-(LL.full/LL.null)^(2/nrow(iphone.data))
+```
+# Measure 3: Confusion Matrix (General Performance Measure)
+
+We will talk about this in the next class.

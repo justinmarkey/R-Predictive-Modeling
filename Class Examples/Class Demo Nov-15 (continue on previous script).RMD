@@ -1,0 +1,170 @@
+---
+title: "Demonstration of Decision Tree Analysis"
+output: word_document
+---
+
+#1 Import data and create model sample
+```{r}
+adult.data<-read.csv("adult.csv")
+
+set.seed(347)
+row_index<-sample(1:nrow(adult.data),18000)
+train<-adult.data[row_index,]
+valid<-adult.data[-row_index,]
+```
+
+#2 Build a decision tree on training data set.(rpart package will be used)
+```{r}
+library(rpart)
+default.tree<-rpart(data=train, ABOVE50K~., method="class")
+```
+
+Examine the tree output:
+```{r}
+summary(default.tree)
+default.tree$variable.importance
+```
+
+Plot the tree output:
+```{r}
+library(rattle)
+fancyRpartPlot(default.tree)
+```
+We can extract the variable importance separately.
+```{r}
+default.tree$variable.importance
+```
+
+We can extract the cp table separately
+```{r}
+default.tree$cptable
+```
+
+#3 Generate predictions with Decision Tree
+
+The in-sample prediction can be obtained by:
+```{r}
+in.sample.pred<-predict(default.tree)
+```
+Get the probability of y=1:
+```{r}
+in.sample.pred[,"1"]
+```
+
+The out-of-sample prediction can be obtained by:
+```{r}
+out.sample.pred<-predict(default.tree, newdata=valid)
+```
+
+#4 Prune the tree
+Step 1 is to grow a more complicated tree
+```{r}
+complicated.tree<-rpart(
+  data=train,
+  ABOVE50K~.,
+  method="class",
+  control=rpart.control(cp=0.0001))
+```
+
+We can assess the over-fitting issues by:
+```{r}
+plotcp(complicated.tree)
+```
+
+
+We see the increasing trend of XError, so we need to identify the optimal cp that gives the minimum of Xerror. The corresponding cp value will gives us the optimal tree.
+
+In order to do that, we need to examine the cp table
+```{r}
+cp.table<-complicated.tree$cptable
+cp.table
+```
+
+Identify the minimum of xerror
+```{r}
+which.min(cp.table[,"xerror"])
+```
+Identify the optmial cp value to stop growing the tree
+```{r}
+optimal.cp<-cp.table[which.min(cp.table[,"xerror"]),"CP"]
+```
+
+The optimal tree structure will be:
+```{r}
+optimal.tree<-prune(complicated.tree, cp=optimal.cp)
+```
+
+
+
+## Comparing Tree Results
+Now we can compare the performance of the three tree models we have:
+1) Default Tree
+2) Complicated Tree
+2) "Optimal Tree"
+
+We can write a performance evaluaion function to simply the work.
+```{r}
+performance_eval <- function(x_pred, x_actual, cutoff_prob){
+  # the function should generate a confusion matrix and accuracy, sensitivity, etc.
+  confusion.matrix<-table(x_actual, x_pred>cutoff_prob)
+  accuarcy <- mean(ifelse(
+    (x_pred>cutoff_prob&x_actual==1)|(x_pred<cutoff_prob&x_actual==0),
+    1,0))
+  sensitivity <- sum(ifelse(x_pred>cutoff_prob&x_actual==1,1,0))/sum(x_actual)
+  # the fucntion should also report AUC based on the roc curve
+  roc.curve.object<-ROSE::roc.curve(x_actual, x_pred, plotit=FALSE)
+  # generate output
+  return(list(
+    output.confusion_matrix=confusion.matrix,
+    output.accuary=accuarcy,
+    output.sensitivity=sensitivity,
+    output.auc=roc.curve.object$auc))
+  
+} 
+```
+
+Test this function:
+```{r}
+out.sample.pred<-as.numeric(predict(default.tree,newdata=valid)[,"1"])
+out.sample.actual<-valid$ABOVE50K
+performance_eval(x_pred=out.sample.pred,
+                 x_actual=out.sample.actual,
+                 cutoff_prob=0.8)
+```
+
+Now, we can make comparison:
+```{r}
+defaul.performance<-performance_eval(
+  x_pred=as.numeric(predict(default.tree,newdata=valid)[,"1"]),
+  x_actual=out.sample.actual,
+  cutoff_prob=0.5)
+
+complicated.performance<-performance_eval(
+  x_pred=as.numeric(predict(complicated.tree,newdata=valid)[,"1"]),
+  x_actual=out.sample.actual,
+  cutoff_prob=0.5)
+
+pruned.performance<-performance_eval(
+  x_pred=as.numeric(predict(optimal.tree,newdata=valid)[,"1"]),
+  x_actual=out.sample.actual,
+  cutoff_prob=0.5)
+
+```
+
+Compare across accuracy:
+```{r}
+defaul.performance$output.accuary
+complicated.performance$output.accuary
+pruned.performance$output.accuary
+```
+```{r}
+defaul.performance$output.sensitivity
+complicated.performance$output.sensitivity
+pruned.performance$output.sensitivity
+```
+```{r}
+defaul.performance$output.auc
+complicated.performance$output.auc
+pruned.performance$output.auc
+```
+

@@ -1,0 +1,10 @@
+---
+title: "Logistic Regression Example"
+output: word_document
+---
+
+Import the admission data.
+```{r}
+ad.data<-read.csv("admission.csv")
+```
+

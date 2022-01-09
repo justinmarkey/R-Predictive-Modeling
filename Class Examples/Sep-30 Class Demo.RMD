@@ -1,0 +1,63 @@
+---
+title: "Demostration of Stepwise Selection"
+output: word_document
+---
+
+First, we should import the data.
+```{r}
+dt<-read.csv("stock_factor.csv")
+```
+
+Second, let's create the model dataset by including only useful variables
+```{r}
+model.data<-dt[,-which(colnames(dt) %in% c("Date","GOOG"))]
+```
+
+# 1) Forward Selection Method
+```{r}
+full.model<-lm(data=model.data, FB~.)
+null.model<-lm(data=model.data, FB~1)
+optimal.forward<-step(null.model, 
+                      scope=list(upper=full.model, lower=null.model),
+                      direction="forward",
+                      trace=FALSE)
+
+```
+
+# 2) Forward Selection Method
+```{r}
+full.model<-lm(data=model.data, FB~.)
+null.model<-lm(data=model.data, FB~1)
+optimal.backward<-step(full.model, 
+                      scope=list(upper=full.model, lower=null.model),
+                      direction="backward")
+
+```
+
+## 3) Stepwise
+```{r}
+full.model<-lm(data=model.data, FB~.)
+null.model<-lm(data=model.data, FB~1)
+optimal.bidirection<-step(full.model, 
+                      scope=list(upper=full.model, lower=null.model),
+                      direction="both",
+                      trace=FALSE)
+
+```
+
+
+## Additional Discussion
+What if I want to include the interaction term??
+Let's assume forward selection method is used.
+
+```{r}
+full.model<-lm(data=model.data, FB~.^2)
+null.model<-lm(data=model.data, FB~1)
+
+optimal.with.interaction.forward<-step(null.model, 
+                      scope=list(upper=full.model, lower=null.model),
+                      direction="forward",
+                      trace=FALSE)
+
+```
+

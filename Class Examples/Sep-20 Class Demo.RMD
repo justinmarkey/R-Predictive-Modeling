@@ -1,0 +1,124 @@
+---
+title: "Class Demo 20210916"
+output: word_document
+---
+
+# Illustration of Regression with CEO Compensation data
+```{r}
+ceo.data<-read.csv("Executive_Compensation.csv")
+```
+
+## Build separate simple linear regression
+```{r}
+model.1<-lm(data=ceo.data,Compensation~Adj.ROA)
+model.2<-lm(data=ceo.data,Compensation~Adj.Returns)
+model.3<-lm(data=ceo.data,Compensation~Total.Assets)
+
+summary(model.1)
+summary(model.2)
+summary(model.3)
+```
+
+## Build a multiple regression
+```{r}
+model.4<-lm(data=ceo.data,
+            Compensation~.)
+summary(model.4)
+```
+
+## Predictions with linear regression
+## Type 1: in-sample prediction
+```{r}
+predict(model.1)
+```
+
+## Type 2: out-of-sample prediction
+Let's assume we predict for three ceos with the following information
+CEO1: Adj.ROA=0.5, Adj.Returns=0.5, Total.Assets=16
+CEO2: Adj.ROA=-0.2, Adj.Returns=-0.3, Total.Assets=400
+CEO3: Adj.ROA=0.2, Adj.Returns=0.3, Total.Assets=50
+
+```{r}
+test.data<-data.frame(
+  Adj.ROA=c(0.5,-0.2,0.2),
+  Adj.Returns=c(0.5,-0.3,0.3),
+  Total.Assets=c(16,400,50)
+)
+predict(model.1,newdata=test.data)
+predict(model.4,newdata=test.data)
+```
+
+
+# Sep-20 Topics: Evaluate the Performance of the Models
+Let's build three additional models:
+```{r}
+model.5<-lm(data=ceo.data,Compensation~Adj.ROA+Adj.Returns)
+model.6<-lm(data=ceo.data,Compensation~Adj.ROA+Total.Assets)
+model.7<-lm(data=ceo.data,Compensation~Adj.Returns+Total.Assets)
+```
+
+Let's extract adjusted r-squared from each model
+```{r}
+summary(model.1)$adj.r.squared
+summary(model.2)$adj.r.squared
+summary(model.3)$adj.r.squared
+summary(model.4)$adj.r.squared
+summary(model.5)$adj.r.squared
+summary(model.6)$adj.r.squared
+summary(model.7)$adj.r.squared
+
+```
+Conclusion: Model 4 gives the best fit according to adjusted r squared.
+
+Now evaluate the model performance for RMSE
+```{r}
+sqrt(mean((predict(model.1)-ceo.data$Compensation)^2))
+sqrt(mean((predict(model.2)-ceo.data$Compensation)^2))
+sqrt(mean((predict(model.3)-ceo.data$Compensation)^2))
+sqrt(mean((predict(model.4)-ceo.data$Compensation)^2))
+sqrt(mean((predict(model.5)-ceo.data$Compensation)^2))
+sqrt(mean((predict(model.6)-ceo.data$Compensation)^2))
+sqrt(mean((predict(model.7)-ceo.data$Compensation)^2))
+
+```
+
+According to RMSE, model 4 is the best, as it has the lowest RMSE.
+
+This conclusion may be incorrect, as our RMSE is based on training data. To get reliable conclusions, we need to build model based on training data, and test the model based on validation data.
+
+More completed procedure is performed as below
+
+1) Create train (350 observations) and valid  (remaining observations)
+```{r}
+set.seed(100)
+row_index<-sample(1:nrow(ceo.data),300)
+train.data<-ceo.data[row_index,]
+valid.data<-ceo.data[-row_index,]
+```
+
+2) Build model with training data, assume we compare three models
+```{r}
+model.x<-lm(data=train.data,Compensation~Total.Assets)
+model.y<-lm(data=train.data,Compensation~Adj.Returns+Total.Assets)
+model.z<-lm(data=train.data,Compensation~.)
+```
+
+Evaluate the performance by R^2
+```{r}
+summary(model.x)$r.squared
+summary(model.y)$r.squared
+summary(model.z)$r.squared
+```
+
+Evaluate by Adj R^2
+```{r}
+summary(model.x)$adj.r.squared
+summary(model.y)$adj.r.squared
+summary(model.z)$adj.r.squared
+```
+Now we evaluate by the out-of-sample RMSE
+```{r}
+sqrt(mean((predict(model.x,newdata=valid.data)-valid.data$Compensation)^2))
+sqrt(mean((predict(model.y,newdata=valid.data)-valid.data$Compensation)^2))
+sqrt(mean((predict(model.z,newdata=valid.data)-valid.data$Compensation)^2))
+```

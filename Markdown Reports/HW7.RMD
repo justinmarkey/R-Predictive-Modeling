@@ -1,0 +1,152 @@
+---
+title: "HW7"
+author: "Justin Markey"
+date: "11/29/2021"
+output: word_document
+---
+# Import the data
+```{r}
+defaultdata <- read.csv("data/HW7 Data.csv")
+defaultdata$y <- ifelse(defaultdata$y == "yes", 1, 0) 
+
+set.seed(12345)
+row_index<-sample(1:nrow(defaultdata),30000)
+train<-defaultdata[row_index,]
+valid<-defaultdata[-row_index,]
+
+```
+# Question 1
+
+## Set proportions
+```{r}
+trainyes <-sum(ifelse(train[,"y"] == 1, 1, 0))
+traintotal <- length(train[,"y"])
+trainproportion = trainyes/traintotal
+
+validyes <-sum(ifelse(valid[,"y"] == 1, 1, 0))
+validtotal <- length(valid[,"y"])
+validproportion = validyes/validtotal
+
+
+trainproportion
+
+validproportion
+```
+### Conclusion
+The proportion between yes and no in our y variable datasets are very similar. This is a good indication that our train and valid sets have adequate yes and no data for the decision tree fitting.
+
+# Question 2
+
+## Plot with Rattle
+```{r}
+library(rpart)
+library(rattle)
+default.tree<-rpart(data=train, as.factor(y)~., method="class")
+fancyRpartPlot(default.tree)
+```
+
+## Variable importance
+```{r}
+default.tree$variable.importance
+```
+
+## CP Table
+```{r}
+default.tree$cptable
+```
+
+### Conclusion
+
+We can see that the tree isn't very complicated and because of that, its rigidness is quite low. The algo doesn't find a lot of the other variables contributing to the performance. 
+
+# Question 3
+
+## We need to set the CP value for a larger tree
+```{r}
+complicated.tree<-rpart(
+  data=train,
+  as.factor(y)~.,
+  method="class",
+  control=rpart.control(cp=0.0001))
+```
+
+## Identify if the model is overfitting by looking at the CP
+```{r}
+plotcp(complicated.tree)
+```
+
+### Conclusion
+We can see a minimum in the line plot. This min value is the ideal cp control value. Any higher CP values means the model is starting to overfit to the training data which isn't good for out of sample predictability.
+
+## Minimize cross validation error by getting best CP
+```{r}
+optimal.cp<-complicated.tree$cptable[which.min(complicated.tree$cptable[,"xerror"]),"CP"]
+optimal.cp
+```
+
+### Conclusion
+We can now prune the tree to this optimal CP to have a model that's both predictive and not over fitted.
+
+## Create optimal tree with new CP
+
+```{r}
+optimal.tree<-prune(complicated.tree, cp=optimal.cp)
+fancyRpartPlot(optimal.tree)
+```
+
+# Question 4
+
+## Create random forest
+```{r}
+set.seed(67890)
+library(randomForest)
+forestmodel<- randomForest(data=train, as.factor(y)~., ntree=500, mtry=5)
+```
+
+## Variable importance for random forest
+```{r}
+forestmodel$importance
+```
+
+# Question 5 AUC
+
+## Predictions and actuals for models
+```{r}
+in.sample.actual <- as.factor(train$y)
+in.sample.pred.tree<-predict(optimal.tree)[,2]
+in.sample.pred.forest<-predict(forestmodel, type = "prob")[,2]
+
+```
+
+## AUC
+
+```{r}
+treeauc <- ROSE::roc.curve(in.sample.actual, in.sample.pred.tree, plotit = FALSE)
+forestauc <- ROSE::roc.curve(in.sample.actual, in.sample.pred.forest, plotit = FALSE)
+
+treeauc
+forestauc
+```
+
+### Conclusion
+The forest model has a higher AUC meaning overall it has better in sample performance.
+
+# Question 6 AUC out of sample
+```{r}
+out.sample.actual <- as.factor(valid$y)
+out.sample.pred.tree<-predict(optimal.tree, newdata=valid)[,2]
+out.sample.pred.forest<-predict(forestmodel, newdata=valid, type="prob")[,2]
+```
+
+## AUC
+```{r}
+OS.treeauc <- ROSE::roc.curve(out.sample.actual, out.sample.pred.tree, plotit = FALSE)
+OS.forestauc <- ROSE::roc.curve(out.sample.actual, out.sample.pred.forest, plotit = FALSE)
+
+OS.treeauc
+OS.forestauc
+```
+
+### Conclusion
+
+The forest model continues to have a higher AUC. This indicates it is better at predicting and distinguishing than the optimal tree structure.

@@ -1,0 +1,37 @@
+---
+title: "Class Demo (Dummy Variable)"
+output: html_document
+---
+
+# Examples based on "Professor.csv" data
+
+```{r}
+library(car)
+prof.data<-read.csv("professor.csv",stringsAsFactors = TRUE)
+```
+
+We can preview the relationship by conditional scatterplot
+```{r}
+scatterplot(data=prof.data,Salary~Exper|Gender)
+```
+
+We build three models in the slides
+
+First model:
+```{r}
+model.1<-lm(data=prof.data,Salary~Exper+Gender)
+summary(model.1)
+```
+
+Second model:
+```{r}
+model.2<-lm(data=prof.data,Salary~Exper+Gender:Exper)
+summary(model.2)
+```
+
+Third model:
+```{r}
+# model.3 <-lm(data=prof.data, Salary~Exper+Gender+Gender:Exper)
+model.3 <- lm(data=prof.data, Salary~Exper*Gender)
+summary(model.3)
+```

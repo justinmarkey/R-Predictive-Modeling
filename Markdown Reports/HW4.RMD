@@ -1,0 +1,76 @@
+---
+title: "Homework4"
+author: "Justin Markey"
+date: "10/15/2021"
+output: word_document
+---
+
+# Import the data
+```{r}
+data1 <- read.csv("../data/HW4 Data.csv", stringsAsFactors = TRUE)
+```
+# Q1
+```{r}
+Optimal_1 <- step(lm(Y~., data=data1), trace = FALSE)
+summary(Optimal_1)$adj.r.square
+Optimal_1
+```
+
+# Q2
+```{r}
+Optimal_2 <- step(lm(Y~.^2,data=data1), trace = FALSE)
+summary(Optimal_2)$adj.r.square
+Optimal_2
+```
+
+# Q3
+
+## partition the data
+```{r}
+rowindex<-sample(1:nrow(data1),2000)
+traindata<-data1[rowindex,]
+validdata<-data1[-rowindex,]
+```
+
+## train model
+```{r}
+Optimal_3<- step(lm(Y~., data=traindata), trace = FALSE)
+summary(Optimal_3)$adj.r.square
+Optimal_3
+
+```
+
+# Q4
+## validate the models
+```{r}
+RMSE_train <- sqrt(mean((traindata$Y - predict(Optimal_3))^2))
+RMSE_valid <- sqrt(mean((validdata$Y - predict(Optimal_3,newdata=validdata))^2))
+RMSE_train
+RMSE_valid
+```
+
+### Conclusion
+Optimal_3 does not overfit because the prediction error is low for the valid testing compared the to training testing. What this really means is that the underlying data for each set is different, and therefore it cannot be overfitted.
+
+# Q5 normaility testing
+```{r}
+qqnorm(Optimal_3$residuals)
+qqline(Optimal_3$residuals)
+```
+
+```{r}
+shapiro.test(Optimal_3$residuals)
+```
+
+### Conclusion
+The graph shows that the residuals do not follow the qqline indicating some sort of non normal data pattern. This first impression is backed up by the fact that the shapiro test fails.
+
+# Q6
+```{r}
+library(car)
+plot(Optimal_3$residuals)
+ncvTest(Optimal_3)
+```
+
+### Conclusion
+After looking at the plot of the residuals, we can see that the data contains high volitility. The residuals are very spuratic. The ncv test also confirms this volitility as the test fails.

@@ -1,0 +1,67 @@
+---
+title: "Model Diagnosis"
+output: word_document
+---
+
+Use professor data as illustration.
+
+```{r}
+prof.data<-read.csv("professor.csv",stringsAsFactors = TRUE)
+```
+
+
+Assume that our model is Salary ~ Exper + Gender(Male)
+```{r}
+model.1<-lm(data=prof.data, Salary~Exper+Gender)
+```
+
+## 01) Check the multicolinearity issue
+
+Before running the model
+```{r}
+prof.data$Male<-with(prof.data, ifelse(Gender=="Male",1,0))
+with(prof.data,cor(Exper, Male))
+
+```
+
+After fitting the model, we can check by VIF index
+```{r}
+library(car)
+vif(model.1)
+```
+
+## 02) Check whether model produces unbiased predictions
+```{r}
+mean(model.1$residuals)
+t.test(model.1$residuals)
+```
+
+## 03) Check whether the model has heteroscadasicity issue
+We can plot the residual
+```{r}
+plot(model.1$residuals)
+plot(model.1$residuals~prof.data$Exper)
+plot(model.1$residuals~prof.data$Salary)
+```
+
+We can perform NCV test to obtain more reliable conclusions
+```{r}
+ncvTest(model.1)
+```
+
+Conclusion: this model has a very small p-value for the NCV test, so we cannot think that the variance of the residual is constant.
+
+## 4) Check whether the residuals follow a normal distribution
+
+Use qq-plot
+```{r}
+qqnorm(model.1$residuals)
+qqline(model.1$residuals)
+```
+It seems that normality assumption is not completely supported.
+
+Use Sharpiro Wilk test
+```{r}
+shapiro.test(model.1$residuals)
+```
+The test result suggests that residual follows a normal distribution.

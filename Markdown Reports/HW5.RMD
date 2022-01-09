@@ -1,0 +1,121 @@
+---
+title: "Homework5"
+author: "Justin Markey"
+date: "10/26/2021"
+output: word_document
+---
+
+# Import the data
+```{r}
+setwd("C:/Projects/R/bizanalytics")
+defaultdata <- read.csv("./data/HW5 Data.csv")
+defaultdata$SEX <- factor(defaultdata$SEX)
+defaultdata$EDUCATION <- factor(defaultdata$EDUCATION)
+defaultdata$MARRIAGE <- factor(defaultdata$MARRIAGE)
+```
+
+# Q1
+## Data partiiton
+```{r}
+set.seed(12345)
+row_ind<-sample(1:nrow(defaultdata),20000)
+traindata<-defaultdata[row_ind,]
+validdata<-defaultdata[-row_ind,]
+"Train"
+summary(traindata)
+"Valid"
+summary(validdata)
+```
+
+# Q2
+## logit model without age
+
+```{r}
+defaultmodel <- glm(data = traindata, DEFAULT ~ LIMIT_BAL+SEX+EDUCATION+MARRIAGE+BILL.AMT+PAY.AMT, family = binomial)
+summary(defaultmodel)
+
+```
+### AIC is
+```{r, echo=FALSE}
+AIC(defaultmodel)
+```
+
+# Q3
+
+1) increase payment:
+with an increase in PAY.AMT, You are able to REDUCE defaulting by
+```{r, echo=FALSE}
+defaultmodel$coefficients["PAY.AMT"]
+```
+2) increase bill:
+with an increase in the bill, you INCREASE defaulting by
+```{r, echo=FALSE}
+defaultmodel$coefficients["BILL.AMT"]
+```
+3) increase limit balance:
+with an increase in limit balance, you are able to REDUCE defaulting by
+```{r, echo=FALSE}
+defaultmodel$coefficients["LIMIT_BAL"]
+```
+4)
+A decrease in marriage status by 2 will Decrease defaulting by
+```{r, echo=FALSE}
+defaultmodel$coefficients["MARRIAGE3"] - defaultmodel$coefficients["MARRIAGE1"]
+```
+
+# Q4
+
+## McFadden Pseudo R-Squared
+```{r}
+LL.full<-as.numeric(logLik(defaultmodel))
+null.defaultmodel<-glm(data=traindata,
+                family=binomial,
+                DEFAULT ~ 1)
+LL.null<-as.numeric(logLik(null.defaultmodel))
+
+mcfaddenrsqr <- 1-(LL.full)/(LL.null)
+```
+
+### Mcfadden Pseudo R-Square is equal to
+```{r, echo=FALSE}
+mcfaddenrsqr
+```
+
+# Q5
+## set data in dataframe
+```{r}
+predictiondata <- data.frame(LIMIT_BAL = c(50000),
+                               SEX = c(as.factor(1)),
+                               EDUCATION = c(as.factor(5)),
+                               MARRIAGE = c(as.factor(3)),
+                               BILL.AMT = c(2500),
+                               PAY.AMT = c(1000)
+                               )
+```
+
+### Conclusion
+The percentage of default is
+
+```{r}
+predict(defaultmodel, newdata = predictiondata, type = "response")
+```
+
+
+# Q6
+
+## make model with age in it
+```{r}
+ageindefaultmodel<- glm(data=traindata, DEFAULT ~ ., family=binomial)
+summary(ageindefaultmodel)
+```
+
+## Compare AICs
+```{r}
+"model with age"
+AIC(ageindefaultmodel)
+"model without age"
+AIC(defaultmodel)
+```
+
+### Conclusion
+The model with age included yielded a lower AIC. The lower the AIC the better as it has a built in cost mechanism, similar to adj R Square in linear regressions. Adding more variables to a model adds robustness, generally speaking. The inclusion of age was not only helpful to the model performance, but allows the model to take in more data in general, and perhaps be a better predictor of defaulting in this case.

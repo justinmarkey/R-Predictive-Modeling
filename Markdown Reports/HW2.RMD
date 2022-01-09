@@ -1,0 +1,122 @@
+---
+title: "HW2"
+author: "Justin Markey"
+date: "9/15/2021"
+output: word_document
+---
+
+# Import the Data
+```{r}
+setwd("C:/Projects/R/bizanalytics/data")
+dirtydata <- read.csv("HW2 Data.csv", stringsAsFactors = TRUE)
+```
+
+# Question 1
+
+## define range using normal boxplot ranges
+```{r}
+q1 = with(dirtydata,quantile(X,0.25,na.rm=TRUE))
+q3 = with(dirtydata,quantile(X,0.75,na.rm=TRUE))
+
+lowerrange<-q1-1.5*(q3-q1)
+upperrange<-q3+1.5*(q3-q1)
+
+```
+
+upperrange = 5.1
+lowerrange = -0.46
+q1 = 1.63
+q3 = 3.02
+
+## treat outliers using winsor method
+```{r}
+dirtydata$X1 <- with(dirtydata,
+                     ifelse(X > upperrange, upperrange,
+                            ifelse(X < lowerrange, lowerrange, X)))
+summary(dirtydata)
+
+```
+
+### Conclusion
+
+The upperrange and lowerrange values are equal to the X1(winsorized data) Max and Min. This means that the outliers have been treated successfully.
+
+# Question 2
+
+## define range of upper 99% and lower 1%
+```{r}
+bottomq <- with(dirtydata,quantile(X,0.01,na.rm=TRUE))
+topq <- with(dirtydata,quantile(X,0.99,na.rm=TRUE))
+
+```
+
+topq = 5.14
+bottomq = -0.33
+
+## treat outliers using winsor method
+```{r}
+dirtydata$X2 <- with(dirtydata,
+                  ifelse(X > topq, topq,
+                            ifelse(X < bottomq, bottomq, X)))
+summary(dirtydata)
+
+```
+
+### Conclusion
+
+Again the top 99% value is equal to X2 Max and lower 1% value is equal to X2 Min. This proves every value outside the range has been winsorized.
+
+# Question 3
+
+## Calculate unconditional mean and replace na values with that value
+```{r}
+X1mean.unconditional<-with(dirtydata, mean(X1, na.rm=TRUE))
+
+dirtydata$X3 <- with(dirtydata,
+     ifelse(is.na(X1),
+      X1mean.unconditional,
+       X1))
+
+summary(dirtydata)
+
+```
+
+Unconditional mean = 2.313479331
+
+### Conclusion
+
+In the X3 column we can see that there is no NA values because they've been successfully replaced with the unconditional mean.
+
+# Question 4
+
+## Calculate conditional mean for each factor
+```{r}
+mean.A<-with(subset(dirtydata, Z == "A"),
+                mean(X1, na.rm=TRUE))
+mean.B<-with(subset(dirtydata, Z == "B"),
+                mean(X1, na.rm=TRUE))
+```
+
+
+Mean of A = 2.022240891
+Mean of B = 1.980314933
+
+## Replace na values with the mean for each categorical variable
+```{r}
+dirtydata$X4 <- with(dirtydata,
+                  ifelse(
+                    is.na(X1) & Z =="A",
+                    mean.A,
+                    ifelse(
+                      is.na(X1) & Z == "B",
+                      mean.B,
+                      X1)))
+
+summary(dirtydata)
+
+```
+
+### Conclusion
+
+Good news is that the imputation was successful because their is no NA values, however this imputation is slightly different than the unconditional imputation. The values remained the same except for the Median and 3rd Quantile. The dataset has little change when comparing the unconditional mean imputation and the conditional mean imputation.
+
