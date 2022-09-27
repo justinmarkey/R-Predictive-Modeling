@@ -1,2 +1,2 @@
-This repo demonstrates R Markdown Usage with synthethsized data.
+This repo demonstrates R Markdown Usage
 
